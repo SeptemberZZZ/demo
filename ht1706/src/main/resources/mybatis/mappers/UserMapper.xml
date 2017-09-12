@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tarena.ht.mapper.UserMapper">
+	
+	<resultMap id="userRM" type="User" autoMapping="true">
+		<id property="userId" column="user_id" />
+		<association property="userInfo" javaType="UserInfo" resultMap="userInfoRM" />
+		<association property="dept" javaType="Dept">
+			<id property="deptId" column="dept_id"/>
+			<result property="deptName" column="dept_name"/>
+		</association>
+	</resultMap>
+	
+	<resultMap id="userInfoRM" type="UserInfo" autoMapping="true">
+		<id property="userInfoId" column="user_info_id" />
+		<association property="manager" javaType="UserInfo">
+			<id property="userInfoId" column="p_id"/>
+			<result property="name" column="p_name"/>
+		</association>
+	</resultMap>
+	
+	<sql id="selectSql">
+		select * from user_p u
+		left join (select user_info_id ,name,card_no,manager_id,join_date,salary,birthday,gender,station,telephone,user_level,remark,order_no from user_info_p) i
+		on u.user_id = i.user_info_id
+		left join (select user_info_id p_id,name p_name from user_info_p) p
+		on i.manager_id = p.p_id
+		left join (select dept_id,dept_name  from dept_p) d
+		on u.dept_id = d.dept_id 
+	</sql>
+	
+	<select id="findAll" resultMap="userRM">
+		<include refid="selectSql" />
+	</select>
+	
+	
+	<update id="updateState">
+		update user_p set state = #{state} where user_id in (
+			<foreach collection="userIds" item="userId" separator=",">
+				#{userId}
+			</foreach>
+		)
+	</update>
+	
+	<delete id="deleteUser">
+		delete from user_p where user_id in (
+			<foreach collection="array" item="userId" separator=",">
+				#{userId}
+			</foreach>
+		)
+	</delete>
+	
+	<insert id="saveUser">
+		insert into user_p(user_id,username,password,dept_id,state,create_by,create_dept,create_time,update_by,update_time)
+		values(
+			#{userId,jdbcType=VARCHAR},
+			#{username,jdbcType=VARCHAR},
+			#{password,jdbcType=VARCHAR},
+			#{dept.deptId,jdbcType=VARCHAR},
+			#{state,jdbcType=INTEGER},
+			#{createBy,jdbcType=VARCHAR},
+			#{createDept,jdbcType=VARCHAR},
+			#{createTime,jdbcType=DATE},
+			#{updateBy,jdbcType=VARCHAR},
+			#{updateTime,jdbcType=DATE}
+		)
+	</insert>
+	
+	
+	
+	<select id="findById" resultMap="userRM">
+		select * from user_p u
+		left join (select user_info_id ,name,card_no,manager_id,join_date,salary,birthday,gender,station,telephone,user_level,remark,order_no from user_info_p) i
+		on u.user_id = i.user_info_id
+		left join (select user_info_id p_id,name p_name from user_info_p) p
+		on i.manager_id = p.p_id
+		left join (select dept_id,dept_name  from dept_p) d
+		on u.dept_id = d.dept_id where user_id = #{userId}
+	</select>
+	
+	<select id="findByUsername" resultMap="userRM">
+		select * from user_p u
+		left join (select user_info_id ,name,card_no,manager_id,join_date,salary,birthday,gender,station,telephone,user_level,remark,order_no from user_info_p) i
+		on u.user_id = i.user_info_id
+		left join (select user_info_id p_id,name p_name from user_info_p) p
+		on i.manager_id = p.p_id
+		left join (select dept_id,dept_name  from dept_p) d
+		on u.dept_id = d.dept_id where username = #{username} 
+	</select>
+	
+	<update id="updateUser">
+		update user_p
+		set username = #{username,jdbcType=VARCHAR},
+		password = #{password,jdbcType=VARCHAR},
+		dept_id = #{dept.deptId,jdbcType=VARCHAR},
+		state = #{state,jdbcType=INTEGER},
+		update_by = #{updateBy,jdbcType=VARCHAR},
+		update_time = #{updateTime,jdbcType=DATE}
+		where user_id = #{userId,jdbcType=VARCHAR}
+	</update>
+	
+	<select id="findByUP" resultMap="userRM">
+		select * from user_p u
+		left join (select user_info_id ,name,card_no,manager_id,join_date,salary,birthday,gender,station,telephone,user_level,remark,order_no from user_info_p) i
+		on u.user_id = i.user_info_id
+		left join (select user_info_id p_id,name p_name from user_info_p) p
+		on i.manager_id = p.p_id
+		left join (select dept_id,dept_name  from dept_p) d
+		on u.dept_id = d.dept_id where username = #{username} and password = #{password}
+	</select>
+
+	<select id="findPrivilegeList" resultType="java.lang.String">
+		select name
+		  from module_p m, role_module_p rm, role_user_p ru
+		 where m.module_id = rm.module_id
+		   and rm.role_id = ru.role_id
+		   and ru.user_id = #{userId}
+	</select>
+
+</mapper>

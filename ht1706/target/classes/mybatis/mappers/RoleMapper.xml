@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tarena.ht.mapper.RoleMapper">
+
+	<delete id="deleteRole">
+		delete from role_p where role_id in (
+			<foreach collection="array" item="roleId" separator=",">
+				#{roleId}
+			</foreach>
+		)
+	</delete>
+	
+	<sql id="insert">
+		#{createBy,jdbcType=VARCHAR},
+		#{createDept,jdbcType=VARCHAR},
+		#{createTime,jdbcType=DATE},
+		#{updateBy,jdbcType=VARCHAR},
+		#{updateTime,jdbcType=DATE}
+	</sql>
+	
+	<insert id="saveRole">
+		insert into role_p(role_id,name,remarks,order_no,create_by,create_dept,create_time,update_by,update_time)
+		values(
+			#{roleId,jdbcType=VARCHAR},
+			#{name,jdbcType=VARCHAR},
+			#{remarks,jdbcType=VARCHAR},
+			#{orderNo,jdbcType=INTEGER},
+			<include refid="insert" />
+		)
+	</insert>
+	
+	
+	
+</mapper>

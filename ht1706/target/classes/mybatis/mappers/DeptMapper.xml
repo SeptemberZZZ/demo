@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tarena.ht.mapper.DeptMapper">
+	
+	<resultMap type="Dept" id="deptRM" autoMapping="true">
+		<id column="dept_id" property="deptId"/>
+		<association property="parentDept" javaType="Dept">
+			<id column="p_id" property="deptId"/>
+			<result column="p_name" property="deptName" />
+		</association>
+	</resultMap>
+	
+	
+	<select id="findAll" resultMap="deptRM">
+		select * from 
+		dept_p d left join (select dept_id p_id,dept_name p_name from dept_p) p  
+		on d.parent_id = p.p_id order by dept_id
+	</select>
+	
+	<delete id="deleteDepts">
+		delete from dept_p where dept_id in 
+		<foreach collection="array" item="deptId" separator="," open="(" close=")">
+			#{deptId}
+		</foreach>
+	</delete>
+	
+	<update id="updateState">
+		update dept_p set state = #{state} where dept_id in (
+			<foreach collection="deptIds" item="id" separator=",">
+				#{id}
+			</foreach>
+		)
+	</update>
+	
+	<insert id="saveDept">
+		insert into dept_p (DEPT_ID, PARENT_ID, DEPT_NAME, STATE, CREATE_TIME, UPDATE_TIME)
+		values (#{deptId}, #{parentDept.deptId}, #{deptName}, #{state}, #{createTime}, #{updateTime})
+	</insert>
+	
+	<select id="findDeptById" resultMap="deptRM">
+		select * from 
+		dept_p d,(select dept_id p_id,dept_name p_name from dept_p) p  
+		where d.parent_id = p.p_id(+) and d.dept_id = #{deptId} order by dept_id
+	</select>
+	
+	<select id="findParentList" resultType="Dept">
+		select * from dept_p where dept_id not in (#{deptId})
+	</select>
+	
+	<update id="updateDept">
+		update dept_p set 
+		dept_name = #{deptName},
+		parent_id = #{parentDept.deptId} , 
+		state = #{state},
+		update_time = #{updateTime} 
+		where dept_id = #{deptId}
+	</update>
+	
+</mapper>
